@@ -1,0 +1,4 @@
+fileignoreconfig:
+- filename: Manifest.toml
+  checksum: 7edcbf5a8ef6c4a7833bc9a1b3008170a9797dd2c2489d02010c4733c02d22ef
+version: ""
