@@ -1,0 +1,44 @@
+---
+repos:
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.4.0
+      hooks:
+          - id: trailing-whitespace
+          - id: check-merge-conflict
+          - id: check-symlinks
+          - id: check-yaml
+          - id: destroyed-symlinks
+          - id: end-of-file-fixer
+          - id: requirements-txt-fixer
+          - id: sort-simple-yaml
+    - repo: https://github.com/jumanjihouse/pre-commit-hooks
+      rev: 3.0.0
+      hooks:
+          - id: forbid-binary
+          - id: git-check
+          - id: git-dirty
+          - id: markdownlint
+    - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+      rev: 0.2.3
+      hooks:
+          - id: yamlfmt
+    - repo: https://github.com/Lucas-C/pre-commit-hooks
+      rev: v1.5.1
+      hooks:
+          - id: forbid-crlf
+          - id: forbid-tabs
+    - repo: local
+      hooks:
+          - id: talisman-precommit
+            name: talisman
+            entry: bash -c 'if [ -n "${TALISMAN_HOME:-}" ]; then ${TALISMAN_HOME}/talisman_hook_script pre-commit; else echo "TALISMAN does not exist. Consider
+                installing from https://github.com/thoughtworks/talisman . If you already have talisman installed, please ensure TALISMAN_HOME variable
+                is set to where talisman_hook_script resides, for example, TALISMAN_HOME=${HOME}/.talisman/bin"; fi'
+            language: system
+            pass_filenames: false
+            types: [text]
+            verbose: true
+    - repo: https://github.com/kynan/nbstripout
+      rev: 0.6.1
+      hooks:
+          - id: nbstripout
