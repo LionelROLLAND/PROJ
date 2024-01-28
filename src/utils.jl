@@ -88,17 +88,13 @@ function graphFromData(
         default_weight=Inf,
         graph_data=(s=data.s, t=data.t, big_s=data.big_s, d1=data.d1, d2=data.d2),
     )
-    for i in 1:data.n
-        if i == data.s
-            graph[i] = (is_s=true, is_t=false, p=data.p[i], ph=data.ph[i])
-        elseif i == data.t
-            graph[i] = (is_s=false, is_t=true, p=data.p[i], ph=data.ph[i])
-        else
-            graph[i] = (is_s=false, is_t=false, p=data.p[i], ph=data.ph[i])
-        end
-    end
+    foreach(i -> graph[i] = (is_s=(i == data.s), is_t=(i == data.t), p=data.p[i], ph=data.ph[i]), 1:data.n)
     for ((i, j), arc) in data.arcs
-        graph[i, j] = (d=arc.d, big_d=arc.big_d, weight=Ref{Float64}(Inf))
+        # On degage les arcs qui entrent en s ou sortent de t, on en a pas besoin et ca complexifie les
+        # formulations pour rien
+        if !(graph[i].is_t) && !(graph[j].is_s)
+            graph[i, j] = (d=arc.d, big_d=arc.big_d, weight=Ref{Float64}(Inf))
+        end
     end
     return graph
 end
