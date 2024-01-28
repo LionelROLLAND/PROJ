@@ -1,4 +1,6 @@
 fileignoreconfig:
 - filename: Manifest.toml
   checksum: 7edcbf5a8ef6c4a7833bc9a1b3008170a9797dd2c2489d02010c4733c02d22ef
+- filename: sandbox.ipynb
+  checksum: 0fe0b7185d84bd289f882ca52831a1b1b67acfbfbe53d394b1a87fd2c3e1b19c
 version: ""
