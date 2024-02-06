@@ -1,21 +1,32 @@
 using Graphs
 using MetaGraphsNext
 
-
-function readInstance(fd::IOStream)::NamedTuple{
-    (:n, :s, :t, :big_s, :d1, :d2, :p, :ph, :arcs),
+ModResultWrapper = NamedTuple{
+    (:primal_status, :dual_status, :term_status, :obj_value, :bound, :a),
     Tuple{
-        Int64,
-        Int64,
-        Int64,
-        Int64,
-        Int64,
-        Int64,
-        Vector{Int64},
-        Vector{Int64},
-        Dict{Tuple{Int64,Int64},NamedTuple{(:d, :big_d),Tuple{Int64,Float64}}},
-    },
+        ResultStatusCode,
+        ResultStatusCode,
+        TerminationStatusCode,
+        Float64,
+        Float64,
+        Dict{Tuple{Int64,Int64},Float64},
+    }
 }
+
+RawData = @NamedTuple begin
+    n::Int64
+    s::Int64
+    t::Int64
+    big_s::Int64
+    d1::Int64
+    d2::Int64
+    p::Vector{Int64}
+    ph::Vector{Int64}
+    arcs::Dict{Tuple{Int64,Int64},NamedTuple{(:d, :big_d),Tuple{Int64,Float64}}}
+end
+
+
+function readInstance(fd::IOStream)::RawData
     lines::Vector{String} = readlines(fd)
     n::Int64 = parse(Int64, split(lines[1], " ")[end])
     s::Int64 = parse(Int64, split(lines[2], " ")[end])
@@ -60,22 +71,7 @@ function weight_fun(
     return ntup.weight[]
 end
 
-function graphFromData(
-    data::NamedTuple{
-        (:n, :s, :t, :big_s, :d1, :d2, :p, :ph, :arcs),
-        Tuple{
-            Int64,
-            Int64,
-            Int64,
-            Int64,
-            Int64,
-            Int64,
-            Vector{Int64},
-            Vector{Int64},
-            Dict{Tuple{Int64,Int64},NamedTuple{(:d, :big_d),Tuple{Int64,Float64}}},
-        },
-    }
-)::MetaGraph
+function graphFromData(data::RawData)::MetaGraph
     if data.s == data.t
         error("The source and the sink are the same node.")
     end
@@ -97,4 +93,22 @@ function graphFromData(
         end
     end
     return graph
+end
+
+function mkPath(a::Dict{Tuple{Int64,Int64},Float64})::Vector{Int64}
+    building_dict::Dict{Int64,Int64} = Dict{Int64,Int64}()
+    for ((i, j), val) in pairs(a)
+        int_val::Int64 = Int64(val)
+        floor(val) == val && int_val in [0, 1] ? nothing : error("a is not integer feasible.")
+        if int_val == 1
+            haskey(building_dict, i) ? error("Two arcs coming from the same node.") : building_dict[i] = j
+        end
+    end
+    current_i::Int64 = only(setdiff(keys(building_dict), values(building_dict)))
+    path::Vector{Int64} = [current_i]
+    while haskey(building_dict, current_i)
+        current_i = building_dict[current_i]
+        push!(path, current_i)
+    end
+    return path
 end
