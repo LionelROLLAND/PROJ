@@ -1,17 +1,22 @@
 using Graphs
 using MetaGraphsNext
+using JuMP
 
-ModResultWrapper = NamedTuple{
-    (:primal_status, :dual_status, :term_status, :obj_value, :bound, :a),
-    Tuple{
-        ResultStatusCode,
-        ResultStatusCode,
-        TerminationStatusCode,
-        Float64,
-        Float64,
-        Dict{Tuple{Int64,Int64},Float64},
-    }
-}
+ModResultWrapper = @NamedTuple begin
+    primal_status::ResultStatusCode
+    dual_status::ResultStatusCode
+    term_status::TerminationStatusCode
+    obj_value::Float64
+    bound::Float64
+    a::Dict{Tuple{Int64,Int64},Float64}
+end
+
+StdResultWrapper = @NamedTuple begin
+    is_feasible::Bool
+    proven_optimality::Bool
+    value::Float64
+    bound::Float64
+end
 
 RawData = @NamedTuple begin
     n::Int64

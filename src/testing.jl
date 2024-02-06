@@ -12,8 +12,8 @@ function testMethod(;
     function instanceWrapper(filename::String)::Nothing
         println("Processing $filename...")
         graph::MetaGraph = open(
-            readInstance |> graphFromData,
-            joinpath("instance_dir", filename),
+            graphFromData ∘ readInstance,
+            joinpath(instance_dir, filename),
         )
         elapsed = @elapsed result = method(graph)
         result_dict::Dict{String,Union{String,Int64,Float64}} = Dict{String,Union{String,Int64,Float64}}(
@@ -21,7 +21,9 @@ function testMethod(;
             "method" => method_name,
             "is_feasible" => Int64(result.is_feasible),
             "proven_optimality" => Int64(result.proven_optimality),
-            "solving_time" => result.time,
+            "value" => result.value,
+            "bound" => result.bound,
+            "solving_time" => elapsed,
         )
         while !trylock(save_file)
         end

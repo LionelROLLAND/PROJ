@@ -83,3 +83,16 @@ function dualSolve(
         a=Dict{Tuple{Int64,Int64},Float64}((i, j) => value(a[(i, j)]) for (i, j) in edge_labels(graph)),
     )
 end
+
+function completeModelWrapper(method::Function; time_budget::Float64=60.0)::Function
+    function wrapped(graph::MetaGraph)::StdResultWrapper
+        result::ModResultWrapper = method(graph, timelimit=time() + time_budget)
+        return (
+            is_feasible=(result.primal_status == FEASIBLE_POINT),
+            proven_optimality=(result.term_status == OPTIMAL),
+            value=result.obj_value,
+            bound=result.bound,
+        )
+    end
+    return wrapped
+end
