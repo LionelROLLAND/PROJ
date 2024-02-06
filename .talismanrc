@@ -2,7 +2,7 @@ fileignoreconfig:
 - filename: Manifest.toml
   checksum: eefc1f710b5516363d541bca20a1ecbb34d983c76a2b8cdacdba68e527f42c02
 - filename: sandbox.ipynb
-  checksum: 9c2331e264ccc3c276e1150e4b5c12e381286bb037d552a5fd314ecfb3bc6c3f
+  checksum: 5fc3c3146ec2af3f1f35c699248bb45e54edb2e8a428677e09244d1be077d3fc
 - filename: src/utils.jl
   checksum: 1012d7a1cbcbb3962865ec57765119134ebd573cbdda542cdf66b78bb836f342
 - filename: src/latex.jl
