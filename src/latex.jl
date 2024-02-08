@@ -85,9 +85,9 @@ function processResultsForTable(
             instance_entry[entry_dict["method"]] = (
                 is_feasible=Bool(entry_dict["is_feasible"]),
                 proven_optimality=Bool(entry_dict["proven_optimality"]),
-                value=entry_dict["value"],
+                value=(entry_dict["value"] === nothing ? Inf : entry_dict["value"]),
                 lower_bound=entry_dict["lower_bound"],
-                upper_bound=entry_dict["upper_bound"],
+                upper_bound=(entry_dict["upper_bound"] === nothing ? Inf : entry_dict["upper_bound"]),
                 solving_time=entry_dict["solving_time"],
             )
 
