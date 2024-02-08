@@ -74,13 +74,18 @@ function dualSolve(
     )
     set_attribute(m, "TimeLimit", timelimit - time())
     optimize!(m)
+    ub::Float64 = Inf
+    prim_stat::ResultStatusCode = primal_status(m)
+    if prim_stat == FEASIBLE_POINT
+        ub = objective_value(m)
+    end
     return (
         primal_status=primal_status(m),
         dual_status=dual_status(m),
         term_status=termination_status(m),
         obj_value=objective_value(m),
         lower_bound=objective_bound(m),
-        upper_bound=objective_value(m),
+        upper_bound=ub,
         a=Dict{Tuple{Int64,Int64},Float64}((i, j) => value(a[(i, j)]) for (i, j) in edge_labels(graph)),
     )
 end
@@ -93,7 +98,7 @@ function completeModelWrapper(method::Function; time_budget::Float64=60.0)::Func
             proven_optimality=(result.term_status == OPTIMAL),
             value=result.obj_value,
             lower_bound=result.lower_bound,
-            upper_bound=result.upper_bound,
+            upper_bound=(result.upper_bound == Inf ? typemax(Float64) : result.upper_bound),
             solution=mkPath(result.a),
         )
     end
