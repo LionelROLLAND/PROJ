@@ -87,7 +87,7 @@ end
 
 function completeModelWrapper(method::Function; time_budget::Float64=60.0)::Function
     function wrapped(graph::MetaGraph)::StdResultWrapper
-        result::ModResultWrapper = method(graph, timelimit=time() + time_budget)
+        result::ModResultWrapper = method(graph; timelimit=time() + time_budget)
         return (
             is_feasible=(result.primal_status == FEASIBLE_POINT),
             proven_optimality=(result.term_status == OPTIMAL),

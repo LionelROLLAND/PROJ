@@ -16,22 +16,22 @@ mutable struct HeurEdge
     node_multiplier::Ref{Float64}
 end
 
-HeurParams = @NamedTuple begin
+struct HeurParams{S<:Function,T<:Function,U<:Function}
     m_start::Float64
-    m_smoother::Function
-    v_smoother::Function
-    e_smoother::Function
+    m_smoother::S
+    v_smoother::T
+    e_smoother::U
 end
 
 function baseSmoother(n::Real)::Real
     return n / (n + 1)
 end
 
-default_heur_params = (
-    m_start=1.0,
-    m_smoother=baseSmoother,
-    v_smoother=n -> 9 + n / 10 |> baseSmoother,
-    e_smoother=n -> 9 + n / 10 |> baseSmoother,
+default_heur_params = HeurParams(
+    1.0,
+    baseSmoother,
+    n -> 9 + n / 10 |> baseSmoother,
+    n -> 9 + n / 10 |> baseSmoother,
 )
 
 function heurWeight(e::HeurEdge)::Float64
@@ -50,7 +50,7 @@ end
 
 function heuristicSolve(
     graph;
-    params=default_heur_params,
+    params::HeurParams=default_heur_params,
     timelimit::Float64=time() + 10.0,
 )::StdResultWrapper
 
@@ -198,4 +198,29 @@ function heuristicSolve(
             solution=Vector{Int64}(),
         )
     end
+end
+
+function nSquaredTimeWithMax(;
+    maxtime::Float64,
+    mintime::Float64,
+    max_n::Int64=2500,
+)::Function
+    function time_budget(graph::MetaGraph)::Float64
+        return max(mintime, maxtime * (nv(graph)^2) / (max_n^2))
+    end
+    return time_budget
+end
+
+function heurWrapper(;
+    time_budget_fun::Function,
+    params::HeurParams=default_heur_params,
+)::Function
+    function wrapper(graph::MetaGraph)::StdResultWrapper
+        return heuristicSolve(
+            graph;
+            params=params,
+            timelimit=time() + time_budget_fun(graph),
+        )
+    end
+    return wrapper
 end
