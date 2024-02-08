@@ -94,6 +94,7 @@ function completeModelWrapper(method::Function; time_budget::Float64=60.0)::Func
             value=result.obj_value,
             lower_bound=result.lower_bound,
             upper_bound=result.upper_bound,
+            solution=mkPath(result.a),
         )
     end
     return wrapped

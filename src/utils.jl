@@ -18,6 +18,7 @@ StdResultWrapper = @NamedTuple begin
     value::Float64
     lower_bound::Float64
     upper_bound::Float64
+    solution::Vector{Int64}
 end
 
 RawData = @NamedTuple begin

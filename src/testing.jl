@@ -2,6 +2,8 @@ using Graphs
 using MetaGraphsNext
 import JSON
 
+include("utils.jl")
+
 function testMethod(;
     method::Function,
     method_name::String,
@@ -15,8 +17,10 @@ function testMethod(;
             graphFromData ∘ readInstance,
             joinpath(instance_dir, filename),
         )
-        elapsed = @elapsed result = method(graph)
-        result_dict::Dict{String,Union{String,Int64,Float64}} = Dict{String,Union{String,Int64,Float64}}(
+        elapsed = @elapsed result::StdResultWrapper = method(graph)
+        result_dict::Dict{String,Union{Int64,Float64,String,Vector{Int64}}} = Dict{
+            String,Union{Int64,Float64,String,Vector{Int64}}
+        }(
             "file" => filename,
             "method" => method_name,
             "is_feasible" => Int64(result.is_feasible),
@@ -24,6 +28,7 @@ function testMethod(;
             "value" => result.value,
             "lower_bound" => result.lower_bound,
             "upper_bound" => result.upper_bound,
+            "solution" => result.solution,
             "solving_time" => elapsed,
         )
         while !trylock(save_file)

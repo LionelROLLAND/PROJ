@@ -1,3 +1,5 @@
+import JSON
+
 MethodResult = @NamedTuple begin
     is_feasible::Bool
     proven_optimality::Bool
