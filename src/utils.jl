@@ -7,7 +7,8 @@ ModResultWrapper = @NamedTuple begin
     dual_status::ResultStatusCode
     term_status::TerminationStatusCode
     obj_value::Float64
-    bound::Float64
+    lower_bound::Float64
+    upper_bound::Float64
     a::Dict{Tuple{Int64,Int64},Float64}
 end
 
@@ -15,7 +16,8 @@ StdResultWrapper = @NamedTuple begin
     is_feasible::Bool
     proven_optimality::Bool
     value::Float64
-    bound::Float64
+    lower_bound::Float64
+    upper_bound::Float64
 end
 
 RawData = @NamedTuple begin

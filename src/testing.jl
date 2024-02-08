@@ -22,10 +22,12 @@ function testMethod(;
             "is_feasible" => Int64(result.is_feasible),
             "proven_optimality" => Int64(result.proven_optimality),
             "value" => result.value,
-            "bound" => result.bound,
+            "lower_bound" => result.lower_bound,
+            "upper_bound" => result.upper_bound,
             "solving_time" => elapsed,
         )
         while !trylock(save_file)
+            sleep(0.01)
         end
         data = open(fd -> JSON.parse(fd), save, read=true)
         push!(data, result_dict)

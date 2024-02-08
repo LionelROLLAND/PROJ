@@ -79,7 +79,8 @@ function dualSolve(
         dual_status=dual_status(m),
         term_status=termination_status(m),
         obj_value=objective_value(m),
-        bound=objective_bound(m),
+        lower_bound=objective_bound(m),
+        upper_bound=objective_value(m),
         a=Dict{Tuple{Int64,Int64},Float64}((i, j) => value(a[(i, j)]) for (i, j) in edge_labels(graph)),
     )
 end
@@ -91,7 +92,8 @@ function completeModelWrapper(method::Function; time_budget::Float64=60.0)::Func
             is_feasible=(result.primal_status == FEASIBLE_POINT),
             proven_optimality=(result.term_status == OPTIMAL),
             value=result.obj_value,
-            bound=result.bound,
+            lower_bound=result.lower_bound,
+            upper_bound=result.upper_bound,
         )
     end
     return wrapped
