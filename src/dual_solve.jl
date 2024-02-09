@@ -98,8 +98,8 @@ function completeModelWrapper(method::Function; time_budget::Float64=60.0)::Func
             proven_optimality=(result.term_status == OPTIMAL),
             value=result.obj_value,
             lower_bound=result.lower_bound,
-            upper_bound=(result.upper_bound == Inf ? typemax(Float64) : result.upper_bound),
-            solution=mkPath(result.a),
+            upper_bound=result.upper_bound,
+            solution=(result.primal_status == FEASIBLE_POINT ? mkPath(result.a) : []),
         )
     end
     return wrapped

@@ -105,9 +105,10 @@ end
 
 function mkPath(a::Dict{Tuple{Int64,Int64},Float64})::Vector{Int64}
     building_dict::Dict{Int64,Int64} = Dict{Int64,Int64}()
+    eps = 0.000_1
     for ((i, j), val) in pairs(a)
-        int_val::Int64 = Int64(val)
-        floor(val) == val && int_val in [0, 1] ? nothing : error("a is not integer feasible.")
+        int_val::Int64 = round(Int64, val)
+        abs(val - round(val)) <= eps && int_val in [0, 1] ? nothing : error("a is not integer feasible.")
         if int_val == 1
             haskey(building_dict, i) ? error("Two arcs coming from the same node.") : building_dict[i] = j
         end
