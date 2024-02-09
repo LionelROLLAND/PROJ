@@ -78,11 +78,6 @@ function plans_coupants(
     # __________MODELE_MAITRE__________
     #declaration du modele
     modele_maitre = Model(Gurobi.Optimizer)
-    modele_maitre = Model(
-        optimizer_with_attributes(
-            Gurobi.Optimizer, "Presolve" => 0
-        )
-    )
     set_silent(modele_maitre)
     @variable(modele_maitre, z >= 0)
     @variable(modele_maitre, a[edge_labels(graph)], Bin)  # vaut 1 ssi arc (i,j) choisi
@@ -109,65 +104,91 @@ function plans_coupants(
         ),
     )
     cpt = 0
-    best_sup::Float64 = Inf
-    SP1_value::Float64 = 0.0
-    SP2_value::Float64 = 0.0
-    Z::Float64 = 0
-    while time() < timelimit
+
+    best_prim_stat::ResultStatusCode = NO_SOLUTION
+    best_dual_stat::ResultStatusCode = NO_SOLUTION
+    best_term_stat::TerminationStatusCode = OPTIMIZE_NOT_CALLED
+    best_val::Float64 = Inf
+    best_ub::Float64 = Inf
+    best_lb::Float64 = 0
+    best_a::Dict{Tuple{Int64,Int64},Float64} = Dict{Tuple{Int64,Int64},Float64}()
+
+    eps = 0.000_1
+    while time() < timelimit && best_term_stat != OPTIMAL
+        set_attribute(modele_maitre, "TimeLimit", timelimit - time())
         JuMP.optimize!(modele_maitre)
-        m_value = JuMP.objective_value(modele_maitre)
-        Z = JuMP.value(z)
-        A = JuMP.value.(a)
-        for (i, j) in edge_labels(graph)
-            if A[(i, j)] > 0
-                println("(", i, ",", j, ") = ", A[(i, j)])
-            end
+        if best_term_stat == OPTIMIZE_NOT_CALLED
+            best_term_stat = TIME_LIMIT
         end
+        if primal_status(modele_maitre) != FEASIBLE_POINT
+            break
+        end
+        best_lb = m_value = JuMP.objective_value(modele_maitre)
+        Z = JuMP.value(z)
+        A = Dict{Tuple{Int64,Int64},Float64}(
+            (i, j) => JuMP.value(a[(i, j)])
+            for (i, j) in edge_labels(graph)
+        )
         println("Objective value modele_maitre: ", m_value)
         cpt += 1
         # # Résolution SP1
         SP1_value, delta_d_sol = heuristic_SP1(A)
         # # Résolution SP2
         SP2_value, delta_p_sol = heuristic_SP2(A)
-        if (round(SP1_value - Z; digits=4) <= 0 && SP2_value <= graph[].big_s)
-            break
-        end
         println("Objective value SP1: ", SP1_value)
-        if (round(SP1_value - Z; digits=4) > 0)
-            @constraint(modele_maitre,
-                sum(graph[i, j].d * (1 + delta_d_sol[(i, j)]) * a[(i, j)] for (i, j) in edge_labels(graph)) <= z)
-            if (SP1_value < best_sup)
-                best_sup = SP1_value
-            end
-            @constraint(modele_maitre, z <= best_sup)
+        if SP1_value > Z + eps
+            @constraint(
+                modele_maitre,
+                sum(
+                    graph[i, j].d * (1 + delta_d_sol[(i, j)]) * a[(i, j)]
+                    for (i, j) in edge_labels(graph)
+                ) <= z
+            )
+            @constraint(modele_maitre, z <= best_ub)
             println("Violée 1")
         end
 
         println("Objective value SP2: ", SP2_value)
-        if (SP2_value > graph[].big_s)
-            @constraint(modele_maitre,
-                sum((graph[i].p + delta_p_sol[i] * graph[i].ph) * a[(i, j)] for (i, j) in edge_labels(graph)) +
-                graph[t].p + delta_p_sol[t] * graph[t].ph <= graph[].big_s)
+        if SP2_value > graph[].big_s + eps
+            @constraint(
+                modele_maitre,
+                (
+                    sum(
+                        (graph[i].p + delta_p_sol[i] * graph[i].ph) * a[(i, j)]
+                        for (i, j) in edge_labels(graph)
+                    )
+                    +
+                    graph[t].p + delta_p_sol[t] * graph[t].ph
+                    <=
+                    graph[].big_s
+                ),
+            )
             println("Violée 2")
-        end
-    end
-    is_feasible::Bool = false
-    is_optimal::Bool = false
-    if round(SP2_value - graph[].big_s; digits=4) <= 0
-        is_feasible = true
-        if round(SP1_value - Z; digits=4) <= 0
-            is_optimal = true
+        else
+            # La solution est realisable
+            if SP1_value <= best_ub
+                # Le <= (et pas <) est hyper important ici a cause de la mise a jour de
+                # best_term_stat
+                best_prim_stat = FEASIBLE_POINT
+                best_dual_stat = UNKNOWN_RESULT_STATUS
+                best_val = SP1_value
+                best_ub = SP1_value
+                best_a = deepcopy(A)
+                if SP1_value <= Z + eps
+                    best_term_stat = OPTIMAL
+                end
+            end
         end
     end
     println("COMPTEUR = ", cpt)
     println("elapsed time : ", time() - start)
     return (
-        primal_status=(is_feasible ? FEASIBLE_POINT : INFEASIBLE_POINT),
-        dual_status=dual_status(modele_maitre),
-        term_status=(is_optimal ? OPTIMAL : TIME_LIMIT),
-        obj_value=objective_value(modele_maitre),
-        lower_bound=objective_bound(modele_maitre),
-        upper_bound=(is_feasible ? objective_value(modele_maitre) : Inf),
-        a=Dict{Tuple{Int64,Int64},Float64}((i, j) => value(a[(i, j)]) for (i, j) in edge_labels(graph)),
+        primal_status=best_prim_stat,
+        dual_status=best_dual_stat,
+        term_status=best_term_stat,
+        obj_value=best_val,
+        lower_bound=best_lb,
+        upper_bound=best_ub,
+        a=best_a,
     )
 end

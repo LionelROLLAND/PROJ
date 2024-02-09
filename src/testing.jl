@@ -41,6 +41,7 @@ function testMethod(;
         return nothing
     end
 
+    already_done::Set{String} = Set{String}()
     if !isfile(save)
         open(
             fd -> JSON.print(fd, []),
@@ -48,11 +49,22 @@ function testMethod(;
             write=true,
             create=true,
         )
+    else
+        union!(
+            already_done,
+            Iterators.map(
+                entry -> entry["file"],
+                Iterators.filter(
+                    entry -> entry["method"] == method_name,
+                    open(fd -> JSON.parse(fd), save, read=true),
+                ),
+            )
+        )
     end
     save_file = ReentrantLock()
     @sync begin
-        for file in readdir(instance_dir)
-            Threads.@spawn instanceWrapper(file)
+        for file in Iterators.filter(f -> !(f in already_done), readdir(instance_dir))
+            Threads.@spawn instanceWrapper($file)
         end
     end
     return nothing
