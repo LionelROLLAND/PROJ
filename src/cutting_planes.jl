@@ -5,7 +5,7 @@ using Gurobi
 
 function plans_coupants(
     graph::MetaGraph;
-    timelimit::Float64=3600.0
+    timelimit::Float64=time() + 3600.0,
 )::ModResultWrapper
 
     s::Int64 = graph[].s
@@ -110,7 +110,10 @@ function plans_coupants(
     )
     cpt = 0
     best_sup::Float64 = Inf
-    while (time() - start < timelimit)
+    SP1_value::Float64 = 0.0
+    SP2_value::Float64 = 0.0
+    Z::Float64 = 0
+    while time() < timelimit
         JuMP.optimize!(modele_maitre)
         m_value = JuMP.objective_value(modele_maitre)
         Z = JuMP.value(z)
@@ -124,6 +127,11 @@ function plans_coupants(
         cpt += 1
         # # Résolution SP1
         SP1_value, delta_d_sol = heuristic_SP1(A)
+        # # Résolution SP2
+        SP2_value, delta_p_sol = heuristic_SP2(A)
+        if (round(SP1_value - Z; digits=4) <= 0 && SP2_value <= graph[].big_s)
+            break
+        end
         println("Objective value SP1: ", SP1_value)
         if (round(SP1_value - Z; digits=4) > 0)
             @constraint(modele_maitre,
@@ -134,8 +142,7 @@ function plans_coupants(
             @constraint(modele_maitre, z <= best_sup)
             println("Violée 1")
         end
-        # # Résolution SP2
-        SP2_value, delta_p_sol = heuristic_SP2(A)
+
         println("Objective value SP2: ", SP2_value)
         if (SP2_value > graph[].big_s)
             @constraint(modele_maitre,
@@ -143,18 +150,24 @@ function plans_coupants(
                 graph[t].p + delta_p_sol[t] * graph[t].ph <= graph[].big_s)
             println("Violée 2")
         end
-        if (round(SP1_value - Z; digits=4) <= 0 && SP2_value <= graph[].big_s)
-            break
+    end
+    is_feasible::Bool = false
+    is_optimal::Bool = false
+    if round(SP2_value - graph[].big_s; digits=4) <= 0
+        is_feasible = true
+        if round(SP1_value - Z; digits=4) <= 0
+            is_optimal = true
         end
     end
     println("COMPTEUR = ", cpt)
     println("elapsed time : ", time() - start)
     return (
-        primal_status=primal_status(modele_maitre),
+        primal_status=(is_feasible ? FEASIBLE_POINT : INFEASIBLE_POINT),
         dual_status=dual_status(modele_maitre),
-        term_status=termination_status(modele_maitre),
+        term_status=(is_optimal ? OPTIMAL : TIME_LIMIT),
         obj_value=objective_value(modele_maitre),
-        bound=objective_bound(modele_maitre),
+        lower_bound=objective_bound(modele_maitre),
+        upper_bound=(is_feasible ? objective_value(modele_maitre) : Inf),
         a=Dict{Tuple{Int64,Int64},Float64}((i, j) => value(a[(i, j)]) for (i, j) in edge_labels(graph)),
     )
 end
