@@ -135,18 +135,6 @@ function plans_coupants(
         SP1_value, delta_d_sol = heuristic_SP1(A)
         # # Résolution SP2
         SP2_value, delta_p_sol = heuristic_SP2(A)
-        println("Objective value SP1: ", SP1_value)
-        if SP1_value > Z + eps
-            @constraint(
-                modele_maitre,
-                sum(
-                    graph[i, j].d * (1 + delta_d_sol[(i, j)]) * a[(i, j)]
-                    for (i, j) in edge_labels(graph)
-                ) <= z
-            )
-            @constraint(modele_maitre, z <= best_ub)
-            println("Violée 1")
-        end
 
         println("Objective value SP2: ", SP2_value)
         if SP2_value > graph[].big_s + eps
@@ -172,13 +160,29 @@ function plans_coupants(
                 best_prim_stat = FEASIBLE_POINT
                 best_dual_stat = UNKNOWN_RESULT_STATUS
                 best_val = SP1_value
-                best_ub = SP1_value
+                if SP1_value < best_ub
+                    best_ub = SP1_value
+                    @constraint(modele_maitre, z <= best_ub)
+                end
                 best_a = deepcopy(A)
                 if SP1_value <= Z + eps
                     best_term_stat = OPTIMAL
                 end
             end
         end
+
+        println("Objective value SP1: ", SP1_value)
+        if SP1_value > Z + eps
+            @constraint(
+                modele_maitre,
+                sum(
+                    graph[i, j].d * (1 + delta_d_sol[(i, j)]) * a[(i, j)]
+                    for (i, j) in edge_labels(graph)
+                ) <= z
+            )
+            println("Violée 1")
+        end
+
     end
     println("COMPTEUR = ", cpt)
     println("elapsed time : ", time() - start)
