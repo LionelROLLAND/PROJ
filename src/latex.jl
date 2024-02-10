@@ -56,7 +56,7 @@ function minutify(seconds::Float64)::String
 end
 
 function latexify(s::String)::String
-    return replace(s, "_" => raw"\_")
+    return replace(s, "_" => raw"\_", "&" => raw"\&")
 end
 
 

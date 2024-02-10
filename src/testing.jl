@@ -61,7 +61,6 @@ function testMethod(;
             )
         )
     end
-    save_file = ReentrantLock()
     @sync begin
         for file in Iterators.filter(f -> !(f in already_done), readdir(instance_dir))
             Threads.@spawn instanceWrapper($file)
