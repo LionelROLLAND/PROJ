@@ -94,7 +94,7 @@ function branch_and_cut(
             rem = min(d2, 2)
             delta_p_heur[i] = rem
             if i == t
-                SPA_value += graph[i].ph * rem
+                SP2_value += graph[i].ph * rem
             else
                 SP2_value += sum(a_val[(i, j)] for j in outneighbor_labels(graph, i); init=0) * graph[i].ph * rem
             end
