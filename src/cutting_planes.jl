@@ -21,8 +21,8 @@ function plans_coupants(
         delta_d_heur::Dict{Tuple{Int64,Int64},Float64} = Dict{Tuple{Int64,Int64},Float64}()
         for (i, j) in edge_labels(graph)
             if (a_val[(i, j)] > 0)
-                worst_weight[(i, j)] = graph[i, j].d * graph[i, j].big_d
-                SP1_value += graph[i, j].d
+                worst_weight[(i, j)] = a_val[(i, j)] * graph[i, j].d
+                SP1_value += a_val[(i, j)] * graph[i, j].d
             end
             delta_d_heur[(i, j)] = 0
         end
@@ -34,9 +34,9 @@ function plans_coupants(
             i, j = vec.first
             rem = min(d1, graph[i, j].big_d)
             delta_d_heur[(i, j)] = rem
-            SP1_value += graph[i, j].d * rem
+            SP1_value += a_val[(i, j)] * graph[i, j].d * rem
             d1 -= rem
-            if (d1 == 0)
+            if d1 <= 0
                 break
             end
         end
@@ -49,12 +49,12 @@ function plans_coupants(
         delta_p_heur::Dict{Int64,Float64} = Dict{Int64,Float64}()
         for (i, j) in edge_labels(graph)
             if (a_val[(i, j)] > 0)
-                worst_weight[i] = 2 * graph[i].ph
-                SP2_value += graph[i].p
+                worst_weight[i] = graph[i].ph
+                SP2_value += a_val[(i, j)] * graph[i].p
             end
             delta_p_heur[i] = 0
         end
-        worst_weight[t] = 2 * graph[t].ph
+        worst_weight[t] = graph[t].ph
         SP2_value += graph[t].p
         delta_p_heur[t] = 0
         tuple_vec = sort(collect(worst_weight), by=x -> x.second, rev=true)
@@ -65,9 +65,9 @@ function plans_coupants(
             i = vec.first
             rem = min(d2, 2)
             delta_p_heur[i] = rem
-            SP2_value += graph[i].ph * rem
+            SP2_value += sum(a_val[(i, j)] for j in outneighbor_labels(graph, i); init=0) * graph[i].ph * rem
             d2 -= rem
-            if (d2 == 0)
+            if d2 <= 0
                 break
             end
         end
