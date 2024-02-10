@@ -65,7 +65,11 @@ function plans_coupants(
             i = vec.first
             rem = min(d2, 2)
             delta_p_heur[i] = rem
-            SP2_value += sum(a_val[(i, j)] for j in outneighbor_labels(graph, i); init=0) * graph[i].ph * rem
+            if i == t
+                SPA_value += graph[i].ph * rem
+            else
+                SP2_value += sum(a_val[(i, j)] for j in outneighbor_labels(graph, i); init=0) * graph[i].ph * rem
+            end
             d2 -= rem
             if d2 <= 0
                 break

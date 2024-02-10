@@ -139,7 +139,7 @@ function writeTable(
         println(
             io,
             raw"\multirow{2}{*}{Instance} & \multirow{2}{*}{PR} & ",
-            join(collect("\\multicolumn{2}{c }{$method}" for method in methods), " & "),
+            join(collect("\\multicolumn{2}{c }{$(latexify(method))}" for method in methods), " & "),
             "\\\\",
         )
         println(
@@ -218,4 +218,29 @@ function writeTable(
     insertTable(output)
     print(output, suff)
     return nothing
+end
+
+
+function processResultsForSolutions(
+    src_files::Vector{String};
+    not_robust_method::String,
+)::Dict{String,ValSol}
+    ValSol = @NamedTuple begin
+        val::Float64
+        sol::Vector{Int64}
+    end
+    best_sols::Dict{String,ValSol} = Dict{String,ValSol}()
+    for src_file in src_files
+        src_data = open(fd -> JSON.parse(fd), src_file, read=true)
+        for entry in Iterators.filter(e -> e["method"] != not_robust_method, src_data)
+            entry_val::Float64 = (entry["value"] === nothing ? Inf : entry["value"])
+            if !haskey(best_sols, entry["file"]) || best_sols[entry["file"]].val > entry_val
+                best_sols[entry["file"]] = (
+                    val=entry_val,
+                    sol=entry["solution"],
+                )
+            end
+        end
+    end
+    return best_sols
 end

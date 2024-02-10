@@ -6,5 +6,5 @@ fileignoreconfig:
 - filename: src/utils.jl
   checksum: 1012d7a1cbcbb3962865ec57765119134ebd573cbdda542cdf66b78bb836f342
 - filename: src/latex.jl
-  checksum: 80a23665f6365cb607cdfef504e1072d443118b975e15edce048017245a7d985
+  checksum: e4b7291726059d60cdc0a1f62101f49a295ddf115002ce81e3dfc6cd9e5136aa
 version: ""

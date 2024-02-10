@@ -11,6 +11,7 @@ function branch_and_cut(
     s::Int64 = graph[].s
     t::Int64 = graph[].t
 
+    eps::Float64 = 0.000_1
     function flow_creation(i::Int64)::Int64
         return Int64(graph[i].is_s) - Int64(graph[i].is_t)
     end
@@ -92,7 +93,11 @@ function branch_and_cut(
             i = vec.first
             rem = min(d2, 2)
             delta_p_heur[i] = rem
-            SP2_value += sum(a_val[(i, j)] for j in outneighbor_labels(graph, i); init=0) * graph[i].ph * rem
+            if i == t
+                SPA_value += graph[i].ph * rem
+            else
+                SP2_value += sum(a_val[(i, j)] for j in outneighbor_labels(graph, i); init=0) * graph[i].ph * rem
+            end
             d2 -= rem
             if d2 <= 0
                 break
@@ -108,7 +113,7 @@ function branch_and_cut(
 
         # Résolution SP1
         SP1_value, delta_d_sol = heuristic_SP1(a_val)
-        if (round(SP1_value - z_val; digits=4) > 0)
+        if SP1_value > z_val + eps
             cstr = @build_constraint(
                 sum(graph[i, j].d * (1 + delta_d_sol[(i, j)]) * a[(i, j)] for (i, j) in edge_labels(graph)) <= z)
             MOI.submit(modele_maitre, MOI.LazyConstraint(cb_data), cstr)
@@ -117,7 +122,7 @@ function branch_and_cut(
 
         # Résolution SP2
         SP2_value, delta_p_sol = heuristic_SP2(a_val)
-        if (SP2_value > graph[].big_s)
+        if SP2_value > graph[].big_s + eps
             cstr = @build_constraint(
                 sum((graph[i].p + delta_p_sol[i] * graph[i].ph) * a[(i, j)] for (i, j) in edge_labels(graph)) +
                 graph[t].p + delta_p_sol[t] * graph[t].ph <= graph[].big_s
@@ -133,13 +138,18 @@ function branch_and_cut(
     JuMP.optimize!(modele_maitre)
     println("elapsed time : ", time() - start)
     prim_stat::ResultStatusCode = primal_status(modele_maitre)
+    a_sol::Dict{Tuple{Int64,Int64},Float64} = (
+        prim_stat == FEASIBLE_POINT ?
+        Dict{Tuple{Int64,Int64},Float64}((i, j) => value(a[(i, j)]) for (i, j) in edge_labels(graph)) :
+        Dict{Tuple{Int64,Int64},Float64}((i, j) => 0.0 for (i, j) in edge_labels(graph))
+    )
     return (
-        primal_status=primal_status(modele_maitre),
+        primal_status=prim_stat,
         dual_status=dual_status(modele_maitre),
         term_status=termination_status(modele_maitre),
-        obj_value=objective_value(modele_maitre),
+        obj_value=(prim_stat == FEASIBLE_POINT ? objective_value(modele_maitre) : Inf),
         lower_bound=objective_bound(modele_maitre),
         upper_bound=(prim_stat == FEASIBLE_POINT ? objective_value(modele_maitre) : Inf),
-        a=Dict{Tuple{Int64,Int64},Float64}((i, j) => value(a[(i, j)]) for (i, j) in edge_labels(graph)),
+        a=a_sol,
     )
 end
