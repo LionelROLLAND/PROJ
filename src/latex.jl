@@ -220,15 +220,21 @@ function writeTable(
     return nothing
 end
 
+ValSol = @NamedTuple begin
+    val::Float64
+    sol::Vector{Int64}
+end
+
+FileValSol = @NamedTuple begin
+    instance::String
+    val::Float64
+    sol::Vector{Int64}
+end
 
 function processResultsForSolutions(
     src_files::Vector{String};
     not_robust_method::String,
-)::Dict{String,ValSol}
-    ValSol = @NamedTuple begin
-        val::Float64
-        sol::Vector{Int64}
-    end
+)::Vector{FileValSol}
     best_sols::Dict{String,ValSol} = Dict{String,ValSol}()
     for src_file in src_files
         src_data = open(fd -> JSON.parse(fd), src_file, read=true)
@@ -242,5 +248,34 @@ function processResultsForSolutions(
             end
         end
     end
-    return best_sols
+    best_sols_list::Vector{FileValSol} = collect(
+        (instance=instance, val=val, sol=sol)
+        for (instance, (val, sol)) in pairs(best_sols)
+    )
+    sort!(best_sols_list; by=entry -> nameSorter(entry.instance))
+    return best_sols_list
+end
+
+function writeSolutions(
+    results::Vector{FileValSol};
+    template_file::String,
+    output::IOStream,
+)::Nothing
+    pref, suff = open(
+        fd -> split(read(fd, String), "%insert solutions%"),
+        template_file,
+        read=true,
+    )
+    println(output, pref)
+    println(output, raw"\begin{enumerate}[label=$\bullet$]")
+    for (instance, val, sol) in results
+        println(output, " "^4, raw"\item ", latexify(instance))
+        println(output, " "^4, raw"\begin{enumerate}[label=-]")
+        println(output, " "^8, raw"\item ", "Valeur de la solution : ", string(round(val; digits=2)))
+        println(output, " "^8, raw"\item ", "Solution : ", join(Iterators.map(string, sol), raw" $\to$ "))
+        println(output, " "^4, raw"\end{enumerate}")
+    end
+    println(output, raw"\end{enumerate}")
+    println(output, suff)
+    return nothing
 end
