@@ -1,0 +1,35 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{geometry}
+
+\begin{document}
+
+\newgeometry{left=5mm, top=15mm}
+
+\begingroup
+\scriptsize
+
+\begin{tabular}{c c c c c c c c c c}
+\hline
+\multirow{2}{*}{Instance} & \multirow{2}{*}{PR} & \multicolumn{2}{c }{Dualisation} & \multicolumn{2}{c }{Plans coupants} & \multicolumn{2}{c }{Branch \& Cut} & \multicolumn{2}{c }{Heuristique}\\
+& & Time & Gap & Time & Gap & Time & Gap & Time & Gap\\
+\hline
+20\_USA-road-d.BAY & $63.7 \ \% $ & 0.1s & $0.0 \ \% $ & 1.1s & $0.0 \ \% $ & 2.1s & $0.0 \ \% $ & 9.1s & $0.0 \ \% $ \\
+100\_USA-road-d.BAY & $23.1 \ \% $ & 0.7s & $0.0 \ \% $ & 2m0.1s & $0.0 \ \% $ & 8.2s & $0.0 \ \% $ & 9.1s & $0.0 \ \% $ \\
+\hline
+\end{tabular}
+
+
+\endgroup
+\restoregeometry
+
+\end{document}

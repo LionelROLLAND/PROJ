@@ -15,6 +15,7 @@ repos:
       rev: 3.0.0
       hooks:
           - id: forbid-binary
+            exclude: out/
           - id: git-check
           - id: git-dirty
           - id: markdownlint
