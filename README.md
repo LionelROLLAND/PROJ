@@ -2,11 +2,11 @@
 
 ## Instructions
 
-La démo se trouve dans le notebook `sandobox.ipynb`.
+La démo se trouve dans le notebook `sandbox.ipynb`.
 
 ## Pré-requis
 
-Il faut avoir installé Gurobi au préalable.
+Il faut avoir installé CPLEX au préalable.
 
 Aucun package n'est à installer, le notebook se charge de créer un
 environnement virtuel avec tous les packages nécessaires la première fois

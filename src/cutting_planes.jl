@@ -1,7 +1,7 @@
 using Graphs
 using MetaGraphsNext
 using JuMP
-using Gurobi
+using CPLEX
 
 function plans_coupants(
     graph::MetaGraph;
@@ -81,7 +81,7 @@ function plans_coupants(
     start = time()
     # __________MODELE_MAITRE__________
     #declaration du modele
-    modele_maitre = Model(Gurobi.Optimizer)
+    modele_maitre = Model(CPLEX.Optimizer)
     set_silent(modele_maitre)
     @variable(modele_maitre, z >= 0)
     @variable(modele_maitre, a[edge_labels(graph)], Bin)  # vaut 1 ssi arc (i,j) choisi
@@ -119,7 +119,7 @@ function plans_coupants(
 
     eps = 0.000_1
     while time() < timelimit && best_term_stat != OPTIMAL
-        set_attribute(modele_maitre, "TimeLimit", timelimit - time())
+        set_time_limit_sec(modele_maitre, timelimit - time())
         JuMP.optimize!(modele_maitre)
         if best_term_stat == OPTIMIZE_NOT_CALLED
             best_term_stat = TIME_LIMIT

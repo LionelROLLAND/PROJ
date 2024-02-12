@@ -1,5 +1,5 @@
 using JuMP
-using Gurobi
+using CPLEX
 using Graphs
 using MetaGraphsNext
 
@@ -16,7 +16,7 @@ function branch_and_cut(
         return Int64(graph[i].is_s) - Int64(graph[i].is_t)
     end
 
-    modele_maitre = Model(Gurobi.Optimizer)
+    modele_maitre = Model(CPLEX.Optimizer)
     set_silent(modele_maitre)
     @variable(modele_maitre, z >= 0)
     @variable(modele_maitre, a[edge_labels(graph)], Bin)  # vaut 1 ssi arc (i,j) choisi
@@ -134,7 +134,7 @@ function branch_and_cut(
 
     start = time()
     MOI.set(modele_maitre, MOI.LazyConstraintCallback(), my_lazy_callback)
-    set_attribute(modele_maitre, "TimeLimit", timelimit - time())
+    set_time_limit_sec(m, timelimit - time())
     JuMP.optimize!(modele_maitre)
     println("elapsed time : ", time() - start)
     prim_stat::ResultStatusCode = primal_status(modele_maitre)

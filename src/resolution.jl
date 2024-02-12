@@ -1,5 +1,5 @@
 using JuMP
-using Gurobi
+using CPLEX
 using Graphs
 using MetaGraphsNext
 
@@ -13,7 +13,7 @@ function resolution(
         return Int64(graph[i].is_s) - Int64(graph[i].is_t)
     end
 
-    m = Model(Gurobi.Optimizer)
+    m = Model(CPLEX.Optimizer)
     set_silent(m)
     @variable(m, a[edge_labels(graph)], Bin)  # vaut 1 ssi arc (i,j) choisi
     @objective(m, Min, sum(graph[i, j].d * a[(i, j)] for (i, j) in edge_labels(graph)))
@@ -41,7 +41,7 @@ function resolution(
     start = time()
     s::Int64 = graph[].s
     t::Int64 = graph[].t
-    set_attribute(m, "TimeLimit", timelimit - time())
+    set_time_limit_sec(m, timelimit - time())
     JuMP.optimize!(m)
     m_value = JuMP.objective_value(m)
     println("Objective value m: ", m_value)

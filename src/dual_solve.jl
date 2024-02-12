@@ -1,5 +1,5 @@
 using JuMP
-using Gurobi
+using CPLEX
 
 include("utils.jl")
 
@@ -9,7 +9,7 @@ function dualSolve(
 )::ModResultWrapper
     s::Int64 = graph[].s
     t::Int64 = graph[].t
-    m = Model(Gurobi.Optimizer)
+    m = Model(CPLEX.Optimizer)
     set_silent(m)
     function flow_creation(i::Int64)::Int64
         return Int64(graph[i].is_s) - Int64(graph[i].is_t)
@@ -72,7 +72,7 @@ function dualSolve(
             for (i, j) in edge_labels(graph)
         )
     )
-    set_attribute(m, "TimeLimit", timelimit - time())
+    set_time_limit_sec(m, timelimit - time())
     optimize!(m)
     ub::Float64 = Inf
     prim_stat::ResultStatusCode = primal_status(m)
